@@ -1,6 +1,5 @@
 
 // Configuration file for Lead Referral System
-
 const API_BASE_URL = 'https://lead-manager-production.up.railway.app';
 
 // Export configuration for use in other files
