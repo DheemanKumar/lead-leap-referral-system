@@ -1,0 +1,246 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Referral System - Dashboard</title>
+    <link rel="stylesheet" href="src/styles/global.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">LeadFlow</h1>
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <a href="/submit-lead.html" class="btn btn-primary">+ Refer Candidate</a>
+                    <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="padding-top: 32px;">
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center">
+            <div class="spinner"></div>
+            <p style="color: #6b7280; margin-top: 16px;">Loading your dashboard...</p>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="hidden">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px; margin-bottom: 32px;">
+                
+                <!-- Left Column - My Qualified Leads -->
+                <div>
+                    <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                            <h2 style="font-size: 24px; font-weight: 700; color: #1f2937;">My Qualified Leads</h2>
+                            <div id="leadCount" style="background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%); color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px;">
+                                0 leads
+                            </div>
+                        </div>
+
+                        <!-- Leads Table -->
+                        <div id="leadsTableContainer">
+                            <table class="table" id="leadsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Mobile</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                        <th>Resume</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leadsTableBody">
+                                    <!-- Dynamic content will be inserted here -->
+                                </tbody>
+                            </table>
+                            
+                            <!-- Empty State -->
+                            <div id="emptyLeadsState" class="text-center hidden" style="padding: 48px 24px;">
+                                <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+                                <h3 style="font-size: 18px; font-weight: 600; color: #374151; margin-bottom: 8px;">No leads yet</h3>
+                                <p style="color: #6b7280; margin-bottom: 24px;">Start referring qualified candidates to earn rewards!</p>
+                                <a href="/submit-lead.html" class="btn btn-primary">Refer Your First Candidate</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Top Referrers Leaderboard -->
+                <div>
+                    <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+                        <h2 style="font-size: 20px; font-weight: 700; color: #1f2937; margin-bottom: 24px;">🏆 Top Referrers</h2>
+                        
+                        <div id="leaderboardContainer">
+                            <!-- Dynamic leaderboard content -->
+                        </div>
+
+                        <!-- Empty Leaderboard State -->
+                        <div id="emptyLeaderboardState" class="text-center hidden" style="padding: 24px;">
+                            <div style="font-size: 32px; margin-bottom: 12px;">🏆</div>
+                            <p style="color: #6b7280; font-size: 14px;">Leaderboard will appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/utils/api.js"></script>
+    <script src="src/utils/toast.js"></script>
+    <script>
+        // Check authentication on page load
+        if (!checkAuth()) {
+            // checkAuth redirects to login if no token
+        }
+
+        const loadingState = document.getElementById('loadingState');
+        const mainContent = document.getElementById('mainContent');
+        const leadCount = document.getElementById('leadCount');
+        const leadsTableBody = document.getElementById('leadsTableBody');
+        const leaderboardContainer = document.getElementById('leaderboardContainer');
+        const emptyLeadsState = document.getElementById('emptyLeadsState');
+        const emptyLeaderboardState = document.getElementById('emptyLeaderboardState');
+        const leadsTable = document.getElementById('leadsTable');
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                // Load leads and leaderboard in parallel
+                const [dashboardData, leaderboardData] = await Promise.all([
+                    apiClient.getDashboard(),
+                    apiClient.getLeaderboard()
+                ]);
+
+                // Hide loading, show content
+                loadingState.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+
+                // Update lead count
+                const leadsCount = dashboardData.leads ? dashboardData.leads.length : 0;
+                leadCount.textContent = `${leadsCount} lead${leadsCount !== 1 ? 's' : ''}`;
+
+                // Populate leads table
+                if (leadsCount > 0) {
+                    populateLeadsTable(dashboardData.leads);
+                    leadsTable.classList.remove('hidden');
+                    emptyLeadsState.classList.add('hidden');
+                } else {
+                    leadsTable.classList.add('hidden');
+                    emptyLeadsState.classList.remove('hidden');
+                }
+
+                // Populate leaderboard
+                if (leaderboardData.topReferrers && leaderboardData.topReferrers.length > 0) {
+                    populateLeaderboard(leaderboardData.topReferrers);
+                    leaderboardContainer.classList.remove('hidden');
+                    emptyLeaderboardState.classList.add('hidden');
+                } else {
+                    leaderboardContainer.classList.add('hidden');
+                    emptyLeaderboardState.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                loadingState.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                toast.error('Failed to load dashboard data: ' + error.message);
+            }
+        }
+
+        function populateLeadsTable(leads) {
+            leadsTableBody.innerHTML = '';
+            
+            leads.forEach(lead => {
+                const row = document.createElement('tr');
+                
+                // Status badge styling
+                const statusClass = lead.status === 'qualified' ? 'success' : 
+                                  lead.status === 'pending' ? 'warning' : 'error';
+                
+                row.innerHTML = `
+                    <td style="font-weight: 500;">${lead.name}</td>
+                    <td>${lead.mobile}</td>
+                    <td>${lead.email}</td>
+                    <td>
+                        <span class="alert alert-${statusClass}" style="padding: 4px 12px; font-size: 12px; border-radius: 20px; border: none; margin: 0;">
+                            ${lead.status}
+                        </span>
+                    </td>
+                    <td>
+                        ${lead.resumeUrl ? 
+                            `<a href="${lead.resumeUrl}" target="_blank" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">
+                                📄 Download
+                            </a>` : 
+                            '<span style="color: #6b7280; font-size: 12px;">No resume</span>'
+                        }
+                    </td>
+                `;
+                
+                leadsTableBody.appendChild(row);
+            });
+        }
+
+        function populateLeaderboard(topReferrers) {
+            leaderboardContainer.innerHTML = '';
+            
+            topReferrers.slice(0, 5).forEach((referrer, index) => {
+                const item = document.createElement('div');
+                item.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 16px;
+                    margin-bottom: 12px;
+                    background: ${index === 0 ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' : '#f8fafc'};
+                    border-radius: 12px;
+                    border: 1px solid ${index === 0 ? '#f59e0b' : '#e5e7eb'};
+                `;
+                
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 20px;">${medal}</span>
+                        <div>
+                            <div style="font-weight: 600; color: #1f2937;">${referrer.name}</div>
+                            <div style="font-size: 12px; color: #6b7280;">${referrer.leadCount} lead${referrer.leadCount !== 1 ? 's' : ''}</div>
+                        </div>
+                    </div>
+                    <div style="font-weight: 700; color: #7c3aed; font-size: 18px;">
+                        ${referrer.leadCount}
+                    </div>
+                `;
+                
+                leaderboardContainer.appendChild(item);
+            });
+        }
+
+        // Load dashboard on page load
+        loadDashboard();
+
+        // Add responsive styles for mobile
+        const mediaQuery = window.matchMedia('(max-width: 768px)');
+        
+        function handleMobileView(e) {
+            const grid = document.querySelector('[style*="grid-template-columns: 2fr 1fr"]');
+            if (grid) {
+                if (e.matches) {
+                    grid.style.gridTemplateColumns = '1fr';
+                } else {
+                    grid.style.gridTemplateColumns = '2fr 1fr';
+                }
+            }
+        }
+        
+        mediaQuery.addListener(handleMobileView);
+        handleMobileView(mediaQuery);
+    </script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Referral System - Refer Candidate</title>
+    <link rel="stylesheet" href="src/styles/global.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">LeadFlow</h1>
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <a href="/dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
+                    <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="padding: 32px 0;">
+        <div style="max-width: 600px; margin: 0 auto;">
+            <!-- Page Header -->
+            <div class="text-center mb-6">
+                <h1 style="font-size: 32px; font-weight: 700; color: #1f2937; margin-bottom: 12px;">Refer a Candidate</h1>
+                <p style="font-size: 18px; color: #6b7280;">Help us find great talent and earn rewards for successful referrals!</p>
+            </div>
+
+            <!-- Referral Form -->
+            <div class="form-card">
+                <form id="referralForm">
+                    <div class="form-group">
+                        <label for="candidateId" class="form-label">Candidate ID</label>
+                        <input type="text" id="candidateId" class="form-input" placeholder="Enter unique candidate ID" required>
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                            This should be a unique identifier for the candidate
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="candidateName" class="form-label">Full Name</label>
+                        <input type="text" id="candidateName" class="form-input" placeholder="Enter candidate's full name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="candidateMobile" class="form-label">Mobile Number</label>
+                        <input type="tel" id="candidateMobile" class="form-input" placeholder="Enter mobile number" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="candidateEmail" class="form-label">Email Address</label>
+                        <input type="email" id="candidateEmail" class="form-input" placeholder="Enter email address" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="resumeFile" class="form-label">Resume Upload (PDF only)</label>
+                        <div style="position: relative;">
+                            <input type="file" id="resumeFile" accept=".pdf" required style="display: none;">
+                            <button type="button" id="fileButton" class="form-input" style="text-align: left; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                                <span id="fileButtonText" style="color: #9ca3af;">Choose PDF file...</span>
+                                <span style="background: #f3f4f6; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 500;">Browse</span>
+                            </button>
+                        </div>
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                            Resume must contain "MTech" to be qualified. PDF format only.
+                        </div>
+                    </div>
+
+                    <!-- File Upload Status -->
+                    <div id="fileStatus" class="hidden" style="margin-bottom: 20px;"></div>
+
+                    <button type="submit" id="submitBtn" class="btn btn-primary w-full" style="margin-top: 24px;">
+                        <span id="submitBtnText">Submit Referral</span>
+                        <div id="submitSpinner" class="spinner hidden" style="width: 20px; height: 20px; margin: 0 auto;"></div>
+                    </button>
+                </form>
+
+                <!-- Success State -->
+                <div id="successState" class="hidden text-center" style="padding: 48px 24px;">
+                    <div style="font-size: 64px; margin-bottom: 24px;">🎉</div>
+                    <h2 style="font-size: 24px; font-weight: 700; color: #1f2937; margin-bottom: 12px;">Referral Submitted Successfully!</h2>
+                    <p style="color: #6b7280; margin-bottom: 32px;">Your candidate has been referred and is now being reviewed by our team.</p>
+                    <div style="display: flex; gap: 16px; justify-content: center;">
+                        <button id="referAnother" class="btn btn-primary">Refer Another Candidate</button>
+                        <a href="/dashboard.html" class="btn btn-secondary">Back to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/utils/api.js"></script>
+    <script src="src/utils/toast.js"></script>
+    <script>
+        // Check authentication on page load
+        if (!checkAuth()) {
+            // checkAuth redirects to login if no token
+        }
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        // File upload handling
+        const fileInput = document.getElementById('resumeFile');
+        const fileButton = document.getElementById('fileButton');
+        const fileButtonText = document.getElementById('fileButtonText');
+        const fileStatus = document.getElementById('fileStatus');
+
+        fileButton.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                if (file.type !== 'application/pdf') {
+                    fileStatus.innerHTML = '<div class="alert alert-error">Please select a PDF file only.</div>';
+                    fileStatus.classList.remove('hidden');
+                    fileInput.value = '';
+                    fileButtonText.textContent = 'Choose PDF file...';
+                    fileButtonText.style.color = '#9ca3af';
+                    return;
+                }
+
+                // Validate file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    fileStatus.innerHTML = '<div class="alert alert-error">File size must be less than 10MB.</div>';
+                    fileStatus.classList.remove('hidden');
+                    fileInput.value = '';
+                    fileButtonText.textContent = 'Choose PDF file...';
+                    fileButtonText.style.color = '#9ca3af';
+                    return;
+                }
+
+                // Show selected file
+                fileButtonText.textContent = file.name;
+                fileButtonText.style.color = '#374151';
+                fileStatus.innerHTML = '<div class="alert alert-success">✓ PDF file selected successfully</div>';
+                fileStatus.classList.remove('hidden');
+            }
+        });
+
+        // Form submission
+        document.getElementById('referralForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get form data
+            const candidateId = document.getElementById('candidateId').value.trim();
+            const candidateName = document.getElementById('candidateName').value.trim();
+            const candidateMobile = document.getElementById('candidateMobile').value.trim();
+            const candidateEmail = document.getElementById('candidateEmail').value.trim();
+            const resumeFile = document.getElementById('resumeFile').files[0];
+
+            // Validate required fields
+            if (!candidateId || !candidateName || !candidateMobile || !candidateEmail) {
+                toast.error('Please fill in all required fields.');
+                return;
+            }
+
+            if (!resumeFile) {
+                toast.error('Please upload a resume PDF file.');
+                return;
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(candidateEmail)) {
+                toast.error('Please enter a valid email address.');
+                return;
+            }
+
+            // Validate mobile number (basic validation)
+            const mobileRegex = /^[\d\s\-\+\(\)]{10,}$/;
+            if (!mobileRegex.test(candidateMobile)) {
+                toast.error('Please enter a valid mobile number.');
+                return;
+            }
+
+            // Show loading state
+            const submitBtn = document.getElementById('submitBtn');
+            const submitBtnText = document.getElementById('submitBtnText');
+            const submitSpinner = document.getElementById('submitSpinner');
+
+            submitBtn.disabled = true;
+            submitBtnText.classList.add('hidden');
+            submitSpinner.classList.remove('hidden');
+
+            try {
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('candidateId', candidateId);
+                formData.append('name', candidateName);
+                formData.append('mobile', candidateMobile);
+                formData.append('email', candidateEmail);
+                formData.append('resume', resumeFile);
+
+                // Submit referral
+                const response = await apiClient.submitLead(formData);
+                
+                // Show success message
+                toast.success('Referral submitted successfully!');
+                
+                // Hide form and show success state
+                document.getElementById('referralForm').classList.add('hidden');
+                document.getElementById('successState').classList.remove('hidden');
+
+            } catch (error) {
+                // Handle specific error cases
+                let errorMessage = error.message;
+                
+                if (errorMessage.toLowerCase().includes('duplicate')) {
+                    errorMessage = 'This candidate has already been referred.';
+                } else if (errorMessage.toLowerCase().includes('mtech')) {
+                    errorMessage = 'Resume must contain "MTech" qualification to be eligible.';
+                } else if (errorMessage.toLowerCase().includes('missing')) {
+                    errorMessage = 'Please fill in all required fields.';
+                }
+
+                toast.error(errorMessage);
+            } finally {
+                // Reset loading state
+                submitBtn.disabled = false;
+                submitBtnText.classList.remove('hidden');
+                submitSpinner.classList.add('hidden');
+            }
+        });
+
+        // Refer another candidate
+        document.getElementById('referAnother').addEventListener('click', () => {
+            // Reset form
+            document.getElementById('referralForm').reset();
+            fileButtonText.textContent = 'Choose PDF file...';
+            fileButtonText.style.color = '#9ca3af';
+            fileStatus.classList.add('hidden');
+            
+            // Show form again
+            document.getElementById('referralForm').classList.remove('hidden');
+            document.getElementById('successState').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
