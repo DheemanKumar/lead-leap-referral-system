@@ -1,11 +1,8 @@
-
 // API utility functions for Lead Referral System
-
-const API_BASE_URL = 'https://api.yourcompany.com'; // Replace with actual API URL
 
 class ApiClient {
   constructor() {
-    this.baseURL = API_BASE_URL;
+    this.baseURL = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://lead-manager-production.up.railway.app';
   }
 
   getToken() {
