@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lead Referral System - Dashboard</title>
+    <title>Lead Management System - Dashboard</title>
     <link rel="stylesheet" href="src/styles/global.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
             <div class="header-content">
                 <h1 class="logo">LeadFlow</h1>
                 <div style="display: flex; gap: 16px; align-items: center;">
-                    <a href="/submit-lead.html" class="btn btn-primary">+ Refer Candidate</a>
+                    <a href="/submit-lead.html" class="btn btn-primary">+ Add Referral</a>
                     <button id="logoutBtn" class="btn btn-secondary">Logout</button>
                 </div>
             </div>
@@ -25,14 +25,14 @@
         <!-- Loading State -->
         <div id="loadingState" class="text-center">
             <div class="spinner"></div>
-            <p style="color: #6b7280; margin-top: 16px;">Loading your dashboard...</p>
+            <p style="color: #6b7280; margin-top: 16px;">Loading dashboard...</p>
         </div>
 
         <!-- Main Content -->
         <div id="mainContent" class="hidden">
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px; margin-bottom: 32px;">
                 
-                <!-- Left Column - My Qualified Leads -->
+                <!-- Left Column - My Leads -->
                 <div>
                     <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
@@ -55,7 +55,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="leadsTableBody">
-                                    <!-- Dynamic content will be inserted here -->
+                                    <!-- Dynamic content -->
                                 </tbody>
                             </table>
                             
@@ -63,14 +63,14 @@
                             <div id="emptyLeadsState" class="text-center hidden" style="padding: 48px 24px;">
                                 <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
                                 <h3 style="font-size: 18px; font-weight: 600; color: #374151; margin-bottom: 8px;">No leads yet</h3>
-                                <p style="color: #6b7280; margin-bottom: 24px;">Start referring qualified candidates to earn rewards!</p>
-                                <a href="/submit-lead.html" class="btn btn-primary">Refer Your First Candidate</a>
+                                <p style="color: #6b7280; margin-bottom: 24px;">Start referring qualified candidates!</p>
+                                <a href="/submit-lead.html" class="btn btn-primary">Add Your First Lead</a>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right Column - Top Referrers Leaderboard -->
+                <!-- Right Column - Leaderboard -->
                 <div>
                     <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
                         <h2 style="font-size: 20px; font-weight: 700; color: #1f2937; margin-bottom: 24px;">🏆 Top Referrers</h2>
@@ -151,7 +151,7 @@
             } catch (error) {
                 loadingState.classList.add('hidden');
                 mainContent.classList.remove('hidden');
-                toast.error('Failed to load dashboard data: ' + error.message);
+                toast.error('Failed to load dashboard: ' + error.message);
             }
         }
 
@@ -177,7 +177,7 @@
                     <td>
                         ${lead.resumeUrl ? 
                             `<a href="${lead.resumeUrl}" target="_blank" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">
-                                📄 Download
+                                📄 View
                             </a>` : 
                             '<span style="color: #6b7280; font-size: 12px;">No resume</span>'
                         }

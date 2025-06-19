@@ -1,107 +1,64 @@
 
-// Toast notification system
-
-class ToastManager {
-  constructor() {
-    this.container = null;
-    this.init();
+// Simple toast utility for HTML pages
+const toast = {
+  success: (message) => {
+    showToast(message, 'success');
+  },
+  error: (message) => {
+    showToast(message, 'error');
   }
+};
 
-  init() {
-    // Create toast container if it doesn't exist
-    if (!document.querySelector('.toast-container')) {
-      this.container = document.createElement('div');
-      this.container.className = 'toast-container';
-      this.container.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 1000;
-        pointer-events: none;
-      `;
-      document.body.appendChild(this.container);
-    } else {
-      this.container = document.querySelector('.toast-container');
-    }
-  }
-
-  show(message, type = 'info', duration = 5000) {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.style.cssText = `
-      background: white;
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 12px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-      border-left: 4px solid;
-      max-width: 350px;
-      opacity: 0;
-      transform: translateX(100%);
-      transition: all 0.3s ease;
-      pointer-events: auto;
-      font-weight: 500;
+function showToast(message, type) {
+  // Create toast container if it doesn't exist
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      pointer-events: none;
     `;
-
-    // Set colors based on type
-    const colors = {
-      success: '#10b981',
-      error: '#ef4444',
-      warning: '#f59e0b',
-      info: '#3b82f6'
-    };
-
-    toast.style.borderLeftColor = colors[type] || colors.info;
-    toast.style.color = type === 'error' ? '#991b1b' : '#374151';
-
-    toast.textContent = message;
-    this.container.appendChild(toast);
-
-    // Animate in
-    setTimeout(() => {
-      toast.style.opacity = '1';
-      toast.style.transform = 'translateX(0)';
-    }, 10);
-
-    // Auto remove
-    setTimeout(() => {
-      this.remove(toast);
-    }, duration);
-
-    // Add click to dismiss
-    toast.addEventListener('click', () => {
-      this.remove(toast);
-    });
-
-    return toast;
+    document.body.appendChild(container);
   }
 
-  remove(toast) {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100%)';
+  // Create toast element
+  const toastEl = document.createElement('div');
+  toastEl.style.cssText = `
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    pointer-events: auto;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    max-width: 300px;
+    word-wrap: break-word;
+    ${type === 'success' ? 'background-color: #10b981;' : 'background-color: #ef4444;'}
+  `;
+  toastEl.textContent = message;
+
+  container.appendChild(toastEl);
+
+  // Animate in
+  setTimeout(() => {
+    toastEl.style.transform = 'translateX(0)';
+  }, 100);
+
+  // Remove after 4 seconds
+  setTimeout(() => {
+    toastEl.style.transform = 'translateX(100%)';
     setTimeout(() => {
-      if (toast.parentNode) {
-        toast.parentNode.removeChild(toast);
+      if (container.contains(toastEl)) {
+        container.removeChild(toastEl);
       }
     }, 300);
-  }
-
-  success(message, duration) {
-    return this.show(message, 'success', duration);
-  }
-
-  error(message, duration) {
-    return this.show(message, 'error', duration);
-  }
-
-  warning(message, duration) {
-    return this.show(message, 'warning', duration);
-  }
-
-  info(message, duration) {
-    return this.show(message, 'info', duration);
-  }
+  }, 4000);
 }
 
-// Create global instance
-window.toast = new ToastManager();
+// Export for use in other files
+window.toast = toast;

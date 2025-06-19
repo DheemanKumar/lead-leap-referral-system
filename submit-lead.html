@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lead Referral System - Refer Candidate</title>
+    <title>Lead Management System - Add Referral</title>
     <link rel="stylesheet" href="src/styles/global.css">
 </head>
 <body>
@@ -25,8 +25,8 @@
         <div style="max-width: 600px; margin: 0 auto;">
             <!-- Page Header -->
             <div class="text-center mb-6">
-                <h1 style="font-size: 32px; font-weight: 700; color: #1f2937; margin-bottom: 12px;">Refer a Candidate</h1>
-                <p style="font-size: 18px; color: #6b7280;">Help us find great talent and earn rewards for successful referrals!</p>
+                <h1 style="font-size: 32px; font-weight: 700; color: #1f2937; margin-bottom: 12px;">Add New Referral</h1>
+                <p style="font-size: 18px; color: #6b7280;">Refer qualified candidates and track your submissions</p>
             </div>
 
             <!-- Referral Form -->
@@ -41,22 +41,22 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="candidateName" class="form-label">Full Name</label>
+                        <label for="candidateName" class="form-label">Name</label>
                         <input type="text" id="candidateName" class="form-input" placeholder="Enter candidate's full name" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="candidateMobile" class="form-label">Mobile Number</label>
+                        <label for="candidateMobile" class="form-label">Mobile</label>
                         <input type="tel" id="candidateMobile" class="form-input" placeholder="Enter mobile number" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="candidateEmail" class="form-label">Email Address</label>
+                        <label for="candidateEmail" class="form-label">Email</label>
                         <input type="email" id="candidateEmail" class="form-input" placeholder="Enter email address" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="resumeFile" class="form-label">Resume Upload (PDF only)</label>
+                        <label for="resumeFile" class="form-label">Resume (PDF only)</label>
                         <div style="position: relative;">
                             <input type="file" id="resumeFile" accept=".pdf" required style="display: none;">
                             <button type="button" id="fileButton" class="form-input" style="text-align: left; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
@@ -65,7 +65,7 @@
                             </button>
                         </div>
                         <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
-                            Resume must contain "MTech" to be qualified. PDF format only.
+                            Upload candidate's resume in PDF format
                         </div>
                     </div>
 
@@ -81,10 +81,10 @@
                 <!-- Success State -->
                 <div id="successState" class="hidden text-center" style="padding: 48px 24px;">
                     <div style="font-size: 64px; margin-bottom: 24px;">🎉</div>
-                    <h2 style="font-size: 24px; font-weight: 700; color: #1f2937; margin-bottom: 12px;">Referral Submitted Successfully!</h2>
-                    <p style="color: #6b7280; margin-bottom: 32px;">Your candidate has been referred and is now being reviewed by our team.</p>
+                    <h2 style="font-size: 24px; font-weight: 700; color: #1f2937; margin-bottom: 12px;">Referral Submitted!</h2>
+                    <p style="color: #6b7280; margin-bottom: 32px;">Your referral has been submitted successfully and is being reviewed.</p>
                     <div style="display: flex; gap: 16px; justify-content: center;">
-                        <button id="referAnother" class="btn btn-primary">Refer Another Candidate</button>
+                        <button id="referAnother" class="btn btn-primary">Add Another Referral</button>
                         <a href="/dashboard.html" class="btn btn-secondary">Back to Dashboard</a>
                     </div>
                 </div>
@@ -167,20 +167,6 @@
                 return;
             }
 
-            // Validate email format
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(candidateEmail)) {
-                toast.error('Please enter a valid email address.');
-                return;
-            }
-
-            // Validate mobile number (basic validation)
-            const mobileRegex = /^[\d\s\-\+\(\)]{10,}$/;
-            if (!mobileRegex.test(candidateMobile)) {
-                toast.error('Please enter a valid mobile number.');
-                return;
-            }
-
             // Show loading state
             const submitBtn = document.getElementById('submitBtn');
             const submitBtnText = document.getElementById('submitBtnText');
@@ -200,7 +186,7 @@
                 formData.append('resume', resumeFile);
 
                 // Submit referral
-                const response = await apiClient.submitLead(formData);
+                await apiClient.submitLead(formData);
                 
                 // Show success message
                 toast.success('Referral submitted successfully!');
@@ -210,18 +196,7 @@
                 document.getElementById('successState').classList.remove('hidden');
 
             } catch (error) {
-                // Handle specific error cases
-                let errorMessage = error.message;
-                
-                if (errorMessage.toLowerCase().includes('duplicate')) {
-                    errorMessage = 'This candidate has already been referred.';
-                } else if (errorMessage.toLowerCase().includes('mtech')) {
-                    errorMessage = 'Resume must contain "MTech" qualification to be eligible.';
-                } else if (errorMessage.toLowerCase().includes('missing')) {
-                    errorMessage = 'Please fill in all required fields.';
-                }
-
-                toast.error(errorMessage);
+                toast.error(error.message || 'Failed to submit referral. Please try again.');
             } finally {
                 // Reset loading state
                 submitBtn.disabled = false;
